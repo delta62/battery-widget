@@ -17,7 +17,7 @@ struct opts {
   char *path;
 };
 
-void get_bat_info(struct bat_info *info, struct opts *opts);
+int get_bat_info(struct bat_info *info, struct opts *opts);
 
 int get_opt_info(const int argc, char **argv, struct opts *opts);
 

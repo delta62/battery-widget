@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 
 #include "bat.h"
 
@@ -14,11 +15,14 @@ int main(int argc, char **argv)
 		.status = CHARGED
 	};
 
-	if (!get_opt_info(argc, argv, &opts)) {
+	if (get_opt_info(argc, argv, &opts)) {
 		return 1;
 	}
 
-	get_bat_info(&info, &opts);
+	if (get_bat_info(&info, &opts)) {
+		perror("Unable to get battery status");
+		return 1;
+	}
 
 	print(&info);
 	return 0;
@@ -57,29 +61,49 @@ void print(const struct bat_info *bat)
 int get_opt_info(const int argc, char **argv, struct opts *opts)
 {
 	if (argc == 1) {
-		return 1;
+		return 0;
 	} else if (argc == 3 && strcmp(argv[1], "-p") == 0) {
 		opts->path = argv[2];
-		return 1;
+		return 0;
 	} else {
 		fprintf(stderr, "Unknown option %s\n", argv[1]);
-		return 0;
+		return 1;
 	}
 }
 
-void get_bat_info(struct bat_info *info, struct opts *opts)
+int get_bat_info(struct bat_info *info, struct opts *opts)
 {
 	int pathlen = strlen(opts->path) + 13;
 	char path[pathlen];
-	snprintf(path, pathlen, "%s/%s", opts->path, "energy_full");
-	FILE *maxFile = fopen(path, "r");
-	snprintf(path, pathlen, "%s/%s", opts->path, "energy_now");
-	FILE *curFile = fopen(path, "r");
+	FILE *maxFile, *curFile, *statusFile;
+
+	if (snprintf(path, pathlen, "%s/%s", opts->path, "energy_full") < 0) {
+		return errno;
+	}
+	if ((maxFile = fopen(path, "r")) == NULL) {
+		return errno;
+	}
+
+	if (snprintf(path, pathlen, "%s/%s", opts->path, "energy_now") < 0) {
+		return errno;
+	}
+	if ((curFile = fopen(path, "r")) == NULL) {
+		return errno;
+	}
 
 	char status[13];
-	snprintf(path, pathlen, "%s/%s", opts->path, "status");
-	FILE *statusFile = fopen(path, "r");
+	if (snprintf(path, pathlen, "%s/%s", opts->path, "status") < 0) {
+		return errno;
+	}
+	if ((statusFile = fopen(path, "r")) == NULL) {
+		return errno;
+	}
+
 	fread(status, 1, 13, statusFile);
+	if (ferror(statusFile)) {
+		return errno;
+	}
+
 	if (strcmp(status, "Charging\n") == 0) {
 		info->status = CHARGING;
 	} else if (strcmp(status, "Discharging\n") == 0) {
@@ -88,10 +112,17 @@ void get_bat_info(struct bat_info *info, struct opts *opts)
 		info->status = CHARGED;
 	}
 
-	fscanf(maxFile, "%u", &info->max);
-	fscanf(curFile, "%u", &info->cur);
+	if (fscanf(maxFile, "%u", &info->max) == EOF) {
+		return errno;
+	}
 
-	fclose(maxFile);
-	fclose(curFile);
-	fclose(statusFile);
+	if (fscanf(curFile, "%u", &info->cur) == EOF) {
+		return errno;
+	}
+
+	if (fclose(maxFile) || fclose(curFile) || fclose(statusFile)) {
+		return errno;
+	}
+
+	return 0;
 }
