@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
 
 #include "bat.h"
@@ -53,16 +52,14 @@ void print(const struct bat_info *bat)
 
 int get_opt_info(const int argc, char **argv, struct opts *opts)
 {
-	int opt;
-	while ((opt = getopt(argc, argv, "p:")) != -1) {
-		switch (opt) {
-			case 'p':
-				opts->path = optarg;
-				break;
-			default:
-				printf("Unknown option %c\n", opt);
-				return -1;
-		}
+	if (argc == 1) {
+		return 0;
+	} else if (argc == 3 && strcmp(argv[1], "-p") == 0) {
+		opts->path = argv[2];
+		return 0;
+	} else {
+		fprintf(stderr, "Unknown option %s\n", argv[1]);
+		return -1;
 	}
 }
 

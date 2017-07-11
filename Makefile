@@ -1,12 +1,14 @@
 CC	=	gcc
-CFLAGS	=	-o bat
+CFLAGS	=	-std=c11 -Wall -Wextra -Wpedantic -o bat
+DFLAGS	=	-g
+PFLAGS	=	-O2
 FILES	=	bat.c
 
 debug: bat.c
-	${CC} ${CFLAGS} -g ${FILES}
+	${CC} ${CFLAGS} ${DFLAGS} ${FILES}
 
 prod:	bat.c
-	${CC} ${CFLAGS} -O2 ${FILES}
+	${CC} ${CFLAGS} ${PFLAGS} ${FILES}
 
 clean:
 	rm bat
