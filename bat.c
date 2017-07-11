@@ -14,10 +14,14 @@ int main(int argc, char **argv)
 		.status = CHARGED
 	};
 
-	get_opt_info(argc, argv, &opts);
+	if (!get_opt_info(argc, argv, &opts)) {
+		return 1;
+	}
+
 	get_bat_info(&info, &opts);
 
 	print(&info);
+	return 0;
 }
 
 void bat_icon(const struct bat_info *bat, const unsigned short len)
@@ -53,13 +57,13 @@ void print(const struct bat_info *bat)
 int get_opt_info(const int argc, char **argv, struct opts *opts)
 {
 	if (argc == 1) {
-		return 0;
+		return 1;
 	} else if (argc == 3 && strcmp(argv[1], "-p") == 0) {
 		opts->path = argv[2];
-		return 0;
+		return 1;
 	} else {
 		fprintf(stderr, "Unknown option %s\n", argv[1]);
-		return -1;
+		return 0;
 	}
 }
 
