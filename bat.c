@@ -1,29 +1,24 @@
 #include <stdio.h>
 #include <unistd.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "bat.h"
 
 int main(int argc, char **argv)
 {
-	struct opts *opts = mk_opts();
-	get_opt_info(argc, argv, opts);
+	struct opts opts = {
+		.path = "/sys/class/power_supply/BAT1"
+	};
+	struct bat_info info = {
+		.max = 0,
+		.cur = 0,
+		.status = CHARGED
+	};
 
-	struct bat_info *info = mk_bat_info();
-	get_bat_info(info, opts);
+	get_opt_info(argc, argv, &opts);
+	get_bat_info(&info, &opts);
 
-	print(info);
-
-	destroy_opts(opts);
-	destroy_bat_info(info);
-}
-
-struct opts* mk_opts()
-{
-	struct opts *ret = (struct opts *)malloc(sizeof(struct opts));
-	ret->path = "/sys/class/power_supply/BAT1";
-	return ret;
+	print(&info);
 }
 
 void bat_icon(const struct bat_info *bat, const unsigned short len)
@@ -53,7 +48,7 @@ void print(const struct bat_info *bat)
 {
 	int pct = (int)((100.0 * bat->cur) / bat->max);
 	bat_icon(bat, 8);
-	printf(" (%d%%)\n", pct);
+	printf(" %d%%", pct);
 }
 
 int get_opt_info(const int argc, char **argv, struct opts *opts)
@@ -71,25 +66,6 @@ int get_opt_info(const int argc, char **argv, struct opts *opts)
 	}
 }
 
-void destroy_opts(struct opts *opts)
-{
-	if (opts != NULL) free(opts);
-}
-
-struct bat_info *mk_bat_info()
-{
-	struct bat_info *ret = (struct bat_info *)malloc(sizeof(struct bat_info));
-	ret->max = 0;
-	ret->cur = 0;
-	ret->status = CHARGED;
-	return ret;
-}
-
-void destroy_bat_info(struct bat_info *info)
-{
-	if (info != NULL) free(info);
-}
-
 void get_bat_info(struct bat_info *info, struct opts *opts)
 {
 	int pathlen = strlen(opts->path) + 13;
@@ -99,10 +75,10 @@ void get_bat_info(struct bat_info *info, struct opts *opts)
 	snprintf(path, pathlen, "%s/%s", opts->path, "energy_now");
 	FILE *curFile = fopen(path, "r");
 
-	char status[56];
+	char status[13];
 	snprintf(path, pathlen, "%s/%s", opts->path, "status");
 	FILE *statusFile = fopen(path, "r");
-	fread(status, 1, 55, statusFile);
+	fread(status, 1, 13, statusFile);
 	if (strcmp(status, "Charging\n") == 0) {
 		info->status = CHARGING;
 	} else if (strcmp(status, "Discharging\n") == 0) {
