@@ -26,18 +26,13 @@ struct opts* mk_opts()
 	return ret;
 }
 
-char *bat_icon(const struct bat_info *bat, const unsigned short len)
+void bat_icon(const struct bat_info *bat, const unsigned short len)
 {
-	char *buf = (char *)malloc(len + 4);
-	switch (bat->status) {
-		case CHARGING:
-		case CHARGED:
-			buf[0] = '+';
-			break;
-		default:
-			buf[0] = '-';
-			break;
-	}
+	char buf[len+4];
+	if (bat->status == CHARGING || bat->status == CHARGED)
+		buf[0] = '+';
+	else
+		buf[0] = '-';
 	buf[1] = '[';
 	buf[len + 2] = ']';
 	buf[len + 3] = '\0';
@@ -51,15 +46,14 @@ char *bat_icon(const struct bat_info *bat, const unsigned short len)
 		buf[i + 2] = c;
 	}
 
-	return buf;
+	fputs(buf, stdout);
 }
 
 void print(const struct bat_info *bat)
 {
 	int pct = (int)((100.0 * bat->cur) / bat->max);
-	char * icon = bat_icon(bat, 8);
-	printf("%s (%d%%)\n", icon, pct);
-	free(icon);
+	bat_icon(bat, 8);
+	printf(" (%d%%)\n", pct);
 }
 
 int get_opt_info(const int argc, char **argv, struct opts *opts)

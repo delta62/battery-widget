@@ -26,6 +26,6 @@ int get_opt_info(const int argc, char **argv, struct opts *opts);
 void destroy_opts(struct opts *opts);
 
 void print(const struct bat_info *bat);
-char *bat_icon(const struct bat_info *bat, const unsigned short len);
+void bat_icon(const struct bat_info *bat, const unsigned short len);
 
 #endif
